@@ -1,0 +1,196 @@
+import React, { useState } from 'react';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Avatar from '@mui/material/Avatar';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import Tooltip from '@mui/material/Tooltip';
+import MenuIcon from '@mui/icons-material/Menu';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LogoutIcon from '@mui/icons-material/Logout';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { useAuth } from '../../context/AuthContext';
+import { useThemeMode } from '../../context/ThemeContext';
+
+const Navbar = ({ onSidebarToggle }) => {
+  const { user, logout } = useAuth();
+  const { mode, toggleTheme } = useThemeMode();
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleOpenMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleCloseMenu();
+    logout();
+  };
+
+  // Get user initials for avatar
+  const getInitials = () => {
+    if (!user) return 'U';
+    const first = user.first_name ? user.first_name[0] : '';
+    const last = user.last_name ? user.last_name[0] : '';
+    return (first + last).toUpperCase() || user.username[0].toUpperCase();
+  };
+
+  // Display role labels in a chip format
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrator';
+      case 'officer':
+        return 'Officer';
+      case 'parent':
+        return 'Parent';
+      default:
+        return role;
+    }
+  };
+
+  return (
+    <AppBar
+      position="sticky"
+      elevation={0}
+      sx={{
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        backgroundColor: (theme) =>
+          theme.palette.mode === 'dark'
+            ? 'rgba(17, 24, 39, 0.7)'
+            : 'rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        color: 'text.primary',
+      }}
+    >
+      <Toolbar sx={{ px: { xs: 1.5, md: 3 } }}>
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          edge="start"
+          onClick={onSidebarToggle}
+          sx={{ mr: 2, display: { md: 'none' } }}
+        >
+          <MenuIcon />
+        </IconButton>
+
+        <Typography
+          variant="h6"
+          noWrap
+          component="div"
+          sx={{
+            flexGrow: 1,
+            fontWeight: 800,
+            letterSpacing: '-0.01em',
+            background: (theme) =>
+              `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          DMS Portal
+        </Typography>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {/* Theme Mode Toggle */}
+          <Tooltip title={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}>
+            <IconButton onClick={toggleTheme} color="inherit">
+              {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+          </Tooltip>
+
+          {/* User Account Dropdown */}
+          <Tooltip title="Profile settings">
+            <IconButton onClick={handleOpenMenu} sx={{ p: 0.5 }}>
+              <Avatar
+                sx={{
+                  width: 38,
+                  height: 38,
+                  bgcolor: 'primary.main',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  border: '2px solid',
+                  borderColor: 'background.paper',
+                }}
+              >
+                {getInitials()}
+              </Avatar>
+            </IconButton>
+          </Tooltip>
+
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleCloseMenu}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            slotProps={{
+              paper: {
+                elevation: 3,
+                sx: {
+                  width: 220,
+                  mt: 1.5,
+                  p: 1,
+                  borderRadius: 3,
+                  '& .MuiAvatar-root': {
+                    width: 32,
+                    height: 32,
+                    ml: -0.5,
+                    mr: 1,
+                  },
+                },
+              },
+            }}
+          >
+            <Box sx={{ px: 2, py: 1.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }} noWrap>
+                {user?.first_name} {user?.last_name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }} noWrap>
+                {user?.email}
+              </Typography>
+              <Chip
+                label={getRoleLabel(user?.role)}
+                size="small"
+                color={user?.role === 'admin' ? 'error' : user?.role === 'officer' ? 'primary' : 'success'}
+                sx={{ fontWeight: 600, height: 20, fontSize: '0.7rem' }}
+              />
+            </Box>
+
+            <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', my: 1 }} />
+
+            <MenuItem disabled onClick={handleCloseMenu}>
+              <ListItemIcon>
+                <AccountCircleIcon fontSize="small" />
+              </ListItemIcon>
+              My Profile
+            </MenuItem>
+
+            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+              <ListItemIcon>
+                <LogoutIcon fontSize="small" sx={{ color: 'error.main' }} />
+              </ListItemIcon>
+              Logout
+            </MenuItem>
+          </Menu>
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+};
+
+export default Navbar;

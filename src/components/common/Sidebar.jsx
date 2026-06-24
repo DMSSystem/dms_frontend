@@ -22,6 +22,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import BusinessIcon from '@mui/icons-material/Business';
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 
 import { useAuth } from '../../context/AuthContext';
 
@@ -41,6 +42,7 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
       case 'admin':
         return [
           { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
+          { text: 'Dorms & Rooms', path: '/dorms', icon: <MeetingRoomIcon /> },
           { text: 'Users', path: '/users', icon: <PeopleIcon /> },
           { text: 'Reports', path: '/reports', icon: <BarChartIcon /> },
           { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
@@ -48,6 +50,7 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
       case 'officer':
         return [
           { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
+          { text: 'Dorms & Rooms', path: '/dorms', icon: <MeetingRoomIcon /> },
           { text: 'Leaves', path: '/leaves', icon: <EventNoteIcon /> },
           { text: 'Maintenance', path: '/maintenance', icon: <BuildIcon /> },
           { text: 'Duty Roster', path: '/duty', icon: <CalendarMonthIcon /> },

@@ -12,6 +12,7 @@ import VerifyOTP from '../components/auth/VerifyOTP';
 import AdminDashboard from '../pages/Admin/DashboardPage';
 import OfficerDashboard from '../pages/Officer/DashboardPage';
 import ParentDashboard from '../pages/Parent/DashboardPage';
+import DormsPage from '../pages/DormsPage';
 
 // Components
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -48,6 +49,11 @@ const AppRoutes = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={getDashboard()} />
+          
+          {/* Shared Admin/Officer Views */}
+          <Route element={<ProtectedRoute allowedRoles={['admin', 'officer']} />}>
+            <Route path="/dorms" element={<DormsPage />} />
+          </Route>
           
           {/* Admin Role-Specific Views (using dashboards as placeholders) */}
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

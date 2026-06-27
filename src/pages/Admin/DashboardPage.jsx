@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
@@ -6,6 +6,7 @@ import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { useAuth } from '../../context/AuthContext';
+import { leavesApi } from '../../api/leavesApi';
 
 // Icons
 import PeopleIcon from '@mui/icons-material/People';
@@ -15,11 +16,31 @@ import BuildIcon from '@mui/icons-material/Build';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const [pendingCount, setPendingCount] = useState(null);
+
+  useEffect(() => {
+    const getStats = async () => {
+      try {
+        const res = await leavesApi.getLeaves();
+        const data = res.data?.results || res.data || [];
+        const pending = data.filter(l => l.status === 'pending').length;
+        setPendingCount(pending);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getStats();
+  }, []);
 
   const stats = [
     { title: 'Total Registered Users', value: '342', change: '+12% this month', icon: <PeopleIcon sx={{ fontSize: 32, color: 'primary.main' }} /> },
     { title: 'Active Dorm Rooms', value: '88', change: '94% Occupancy', icon: <MeetingRoomIcon sx={{ fontSize: 32, color: 'secondary.main' }} /> },
-    { title: 'Pending Leave Approvals', value: '14', change: '8 requiring review', icon: <LocalHospitalIcon sx={{ fontSize: 32, color: 'warning.main' }} /> },
+    {
+      title: 'Pending Leave Approvals',
+      value: pendingCount !== null ? pendingCount.toString() : '...',
+      change: pendingCount !== null ? `${pendingCount} requiring review` : 'Loading...',
+      icon: <LocalHospitalIcon sx={{ fontSize: 32, color: 'warning.main' }} />
+    },
     { title: 'Open Maintenance Tasks', value: '9', change: '3 marked as urgent', icon: <BuildIcon sx={{ fontSize: 32, color: 'error.main' }} /> },
   ];
 

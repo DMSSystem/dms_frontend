@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
@@ -6,6 +6,7 @@ import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { useAuth } from '../../context/AuthContext';
+import { leavesApi } from '../../api/leavesApi';
 
 // Icons
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
@@ -15,9 +16,49 @@ import ErrorIcon from '@mui/icons-material/Error';
 
 const ParentDashboard = () => {
   const { user } = useAuth();
+  const [latestLeave, setLatestLeave] = useState(null);
+
+  useEffect(() => {
+    const getStats = async () => {
+      try {
+        const res = await leavesApi.getLeaves();
+        const data = res.data?.results || res.data || [];
+        if (data.length > 0) {
+          setLatestLeave(data[0]);
+        } else {
+          setLatestLeave('none');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getStats();
+  }, []);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'success.main';
+      case 'pending': return 'warning.main';
+      case 'rejected': return 'error.main';
+      default: return 'primary.main';
+    }
+  };
 
   const stats = [
-    { title: 'Leave Out Status', value: 'Approved', change: 'Returned on Sunday', icon: <LocalHospitalIcon sx={{ fontSize: 32, color: 'success.main' }} /> },
+    {
+      title: 'Leave Out Status',
+      value: latestLeave === 'none' 
+        ? 'No Leaves' 
+        : latestLeave 
+          ? (latestLeave.status.charAt(0).toUpperCase() + latestLeave.status.slice(1)) 
+          : '...',
+      change: latestLeave === 'none' 
+        ? 'No requests submitted' 
+        : latestLeave 
+          ? `From ${latestLeave.leave_date} to ${latestLeave.return_date}` 
+          : 'Loading...',
+      icon: <LocalHospitalIcon sx={{ fontSize: 32, color: latestLeave && latestLeave !== 'none' ? getStatusColor(latestLeave.status) : 'primary.main' }} />
+    },
     { title: 'Child\'s Room Assign', value: 'Dorm A - 204', change: 'Roommate: Alex Carter', icon: <MeetingRoomIcon sx={{ fontSize: 32, color: 'primary.main' }} /> },
     { title: 'New Notifications', value: '2 Unread', change: 'Weekly report published', icon: <NotificationsIcon sx={{ fontSize: 32, color: 'secondary.main' }} /> },
     { title: 'Dorm Violations', value: '0', change: 'Excellent behavior rating', icon: <ErrorIcon sx={{ fontSize: 32, color: 'error.main' }} /> },

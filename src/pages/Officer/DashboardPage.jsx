@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
@@ -6,6 +6,7 @@ import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { useAuth } from '../../context/AuthContext';
+import { leavesApi } from '../../api/leavesApi';
 
 // Icons
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
@@ -15,9 +16,29 @@ import FactCheckIcon from '@mui/icons-material/FactCheck';
 
 const OfficerDashboard = () => {
   const { user } = useAuth();
+  const [pendingCount, setPendingCount] = useState(null);
+
+  useEffect(() => {
+    const getStats = async () => {
+      try {
+        const res = await leavesApi.getLeaves();
+        const data = res.data?.results || res.data || [];
+        const pending = data.filter(l => l.status === 'pending').length;
+        setPendingCount(pending);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getStats();
+  }, []);
 
   const stats = [
-    { title: 'Pending Leaves', value: '8', change: 'Require approval', icon: <LocalHospitalIcon sx={{ fontSize: 32, color: 'primary.main' }} /> },
+    {
+      title: 'Pending Leaves',
+      value: pendingCount !== null ? pendingCount.toString() : '...',
+      change: pendingCount !== null ? `${pendingCount} require approval` : 'Loading...',
+      icon: <LocalHospitalIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+    },
     { title: 'Urgent Maintenance', value: '3', change: 'Assigned to vendor', icon: <BuildIcon sx={{ fontSize: 32, color: 'error.main' }} /> },
     { title: 'My Duty Shifts', value: '4', change: 'Next: Wed 18:00', icon: <CalendarMonthIcon sx={{ fontSize: 32, color: 'secondary.main' }} /> },
     { title: 'Pending Inspections', value: '2', change: 'Due by this weekend', icon: <FactCheckIcon sx={{ fontSize: 32, color: 'warning.main' }} /> },

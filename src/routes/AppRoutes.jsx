@@ -14,6 +14,7 @@ import AdminDashboard from '../pages/Admin/DashboardPage';
 import OfficerDashboard from '../pages/Officer/DashboardPage';
 import ParentDashboard from '../pages/Parent/DashboardPage';
 import DormsPage from '../pages/DormsPage';
+import LeavesPage from '../pages/LeavesPage';
 
 // Components
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -66,7 +67,7 @@ const AppRoutes = () => {
 
           {/* Officer Role-Specific Views */}
           <Route element={<ProtectedRoute allowedRoles={['officer', 'admin']} />}>
-            <Route path="/leaves" element={<OfficerDashboard />} />
+            <Route path="/leaves" element={<LeavesPage />} />
             <Route path="/maintenance" element={<OfficerDashboard />} />
             <Route path="/duty" element={<OfficerDashboard />} />
             <Route path="/inspections" element={<OfficerDashboard />} />
@@ -74,7 +75,7 @@ const AppRoutes = () => {
 
           {/* Parent Role-Specific Views */}
           <Route element={<ProtectedRoute allowedRoles={['parent', 'admin']} />}>
-            <Route path="/leaves/history" element={<ParentDashboard />} />
+            <Route path="/leaves/history" element={<LeavesPage />} />
             <Route path="/notifications" element={<ParentDashboard />} />
           </Route>
         </Route>

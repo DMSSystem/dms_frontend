@@ -43,6 +43,7 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
         return [
           { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
           { text: 'Dorms & Rooms', path: '/dorms', icon: <MeetingRoomIcon /> },
+          { text: 'Leaves', path: '/leaves', icon: <EventNoteIcon /> },
           { text: 'Users', path: '/users', icon: <PeopleIcon /> },
           { text: 'Reports', path: '/reports', icon: <BarChartIcon /> },
           { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },

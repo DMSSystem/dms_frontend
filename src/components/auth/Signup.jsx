@@ -11,6 +11,12 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Collapse from '@mui/material/Collapse';
 import Grid from '@mui/material/Grid';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { authApi } from '../../api/authApi';
 import toast from 'react-hot-toast';
 
@@ -29,11 +35,37 @@ const Signup = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const validateRules = {
+    length: (formData.password || '').length >= 8,
+    notNumeric: (formData.password || '').length > 0 && !/^\d+$/.test(formData.password || ''),
+    noSimilarity: (() => {
+      const pw = (formData.password || '').toLowerCase();
+      if (!pw) return false;
+      const parts = [];
+      if (formData.username && formData.username.length >= 3) parts.push(formData.username.toLowerCase());
+      if (formData.first_name && formData.first_name.length >= 3) parts.push(formData.first_name.toLowerCase());
+      if (formData.last_name && formData.last_name.length >= 3) parts.push(formData.last_name.toLowerCase());
+      if (formData.email && formData.email.includes('@')) {
+        const emailPart = formData.email.split('@')[0];
+        if (emailPart.length >= 3) parts.push(emailPart.toLowerCase());
+      }
+      for (const part of parts) {
+        if (pw.includes(part)) return false;
+      }
+      return true;
+    })(),
+    matches: (formData.password || '').length > 0 && formData.password === formData.confirm_password,
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
 
   const handleRoleChange = (event, newRole) => {
     if (newRole !== null) {
@@ -240,10 +272,25 @@ const Signup = () => {
                   fullWidth
                   label="Password"
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={handleChange}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
                   required
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -251,11 +298,130 @@ const Signup = () => {
                   fullWidth
                   label="Confirm Password"
                   name="confirm_password"
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirm_password}
                   onChange={handleChange}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
                   required
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          edge="end"
+                        >
+                          {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
+              </Grid>
+
+              {/* Password Requirements Checklist */}
+              <Grid item xs={12}>
+                <Collapse in={passwordFocused || (formData.password || '').length > 0 || (formData.confirm_password || '').length > 0}>
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 1.5,
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.015)',
+                      border: '1px dashed',
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 700,
+                        letterSpacing: '0.05em',
+                        display: 'block',
+                        mb: 1.5,
+                        color: 'text.secondary',
+                        fontSize: '0.7rem',
+                      }}
+                    >
+                      PASSWORD REQUIREMENTS:
+                    </Typography>
+                    <Grid container spacing={1.5}>
+                      <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {validateRules.length ? (
+                          <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                        ) : (
+                          <RadioButtonUncheckedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+                        )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: validateRules.length ? 'success.main' : 'text.secondary',
+                            fontWeight: validateRules.length ? 500 : 400,
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          At least 8 characters
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {validateRules.notNumeric ? (
+                          <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                        ) : (
+                          <RadioButtonUncheckedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+                        )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: validateRules.notNumeric ? 'success.main' : 'text.secondary',
+                            fontWeight: validateRules.notNumeric ? 500 : 400,
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          Not entirely numeric
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {validateRules.noSimilarity ? (
+                          <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                        ) : (
+                          <RadioButtonUncheckedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+                        )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: validateRules.noSimilarity ? 'success.main' : 'text.secondary',
+                            fontWeight: validateRules.noSimilarity ? 500 : 400,
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          No similarity to your details
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {validateRules.matches ? (
+                          <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                        ) : (
+                          <RadioButtonUncheckedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+                        )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: validateRules.matches ? 'success.main' : 'text.secondary',
+                            fontWeight: validateRules.matches ? 500 : 400,
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          Passwords match
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </Collapse>
               </Grid>
             </Grid>
 

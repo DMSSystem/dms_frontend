@@ -9,6 +9,7 @@ import MainLayout from '../layouts/MainLayout';
 import Login from '../components/auth/Login';
 import Signup from '../components/auth/Signup';
 import VerifyOTP from '../components/auth/VerifyOTP';
+import ForgotPassword from '../components/auth/ForgotPassword';
 import AdminDashboard from '../pages/Admin/DashboardPage';
 import OfficerDashboard from '../pages/Officer/DashboardPage';
 import ParentDashboard from '../pages/Parent/DashboardPage';
@@ -44,6 +45,7 @@ const AppRoutes = () => {
       <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} />
       <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" replace />} />
       <Route path="/verify-otp" element={!isAuthenticated ? <VerifyOTP /> : <Navigate to="/dashboard" replace />} />
+      <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" replace />} />
       
       {/* Protected Layout Routes */}
       <Route element={<ProtectedRoute />}>

@@ -22,4 +22,15 @@ export const authApi = {
   
   changePassword: (data) => 
     api.post('/users/change_password/', data),
+
+  forgotPassword: (email) =>
+    api.post('/auth/forgot-password/', { email }),
+
+  resetPassword: (username, otpCode, newPassword, confirmNewPassword) =>
+    api.post('/auth/reset-password/', {
+      username,
+      otp_code: otpCode,
+      new_password: newPassword,
+      confirm_new_password: confirmNewPassword,
+    }),
 };

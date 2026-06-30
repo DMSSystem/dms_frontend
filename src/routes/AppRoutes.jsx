@@ -15,6 +15,8 @@ import OfficerDashboard from '../pages/Officer/DashboardPage';
 import ParentDashboard from '../pages/Parent/DashboardPage';
 import DormsPage from '../pages/DormsPage';
 import LeavesPage from '../pages/LeavesPage';
+import StudentsPage from '../pages/Admin/StudentsPage';
+
 
 // Components
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -60,7 +62,7 @@ const AppRoutes = () => {
           
           {/* Admin Role-Specific Views (using dashboards as placeholders) */}
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-            <Route path="/users" element={<AdminDashboard />} />
+            <Route path="/users" element={<StudentsPage />} />
             <Route path="/reports" element={<AdminDashboard />} />
             <Route path="/settings" element={<AdminDashboard />} />
           </Route>

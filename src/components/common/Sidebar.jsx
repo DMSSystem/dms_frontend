@@ -8,6 +8,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 
@@ -21,15 +22,18 @@ import BuildIcon from '@mui/icons-material/Build';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import BusinessIcon from '@mui/icons-material/Business';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import AddIcon from '@mui/icons-material/Add';
+import HelpIcon from '@mui/icons-material/Help';
+
+import LogoutIcon from '@mui/icons-material/Logout';
 
 import { useAuth } from '../../context/AuthContext';
 
 const drawerWidth = 260;
 
 const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -42,9 +46,10 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
       case 'admin':
         return [
           { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
-          { text: 'Dorms & Rooms', path: '/dorms', icon: <MeetingRoomIcon /> },
-          { text: 'Leaves', path: '/leaves', icon: <EventNoteIcon /> },
-          { text: 'Users', path: '/users', icon: <PeopleIcon /> },
+          { text: 'Students', path: '/users', icon: <PeopleIcon /> },
+          { text: 'Leave-Out', path: '/leaves', icon: <EventNoteIcon /> },
+          { text: 'Maintenance', path: '/maintenance', icon: <BuildIcon /> },
+          { text: 'Inspections', path: '/inspections', icon: <FactCheckIcon /> },
           { text: 'Reports', path: '/reports', icon: <BarChartIcon /> },
           { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
         ];
@@ -71,16 +76,20 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
   const navItems = getNavItems();
 
   const drawerContent = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Space aligned with the header height */}
-      <Box sx={{ height: { xs: 56, md: 64 } }} />
-
-      <Box sx={{ px: 3, py: 2 }}>
-        <Typography variant="caption" sx={{ textTransform: 'uppercase', letterSpacing: '0.1em', color: 'text.disabled', fontWeight: 700 }}>
-          Navigation
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.paper' }}>
+      
+      {/* Branding Section */}
+      <Box sx={{ px: 3, pt: 3.5, pb: 2.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.015em', lineHeight: 1.2 }}>
+          DMS Admin
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: '0.01em' }}>
+          St. Jude's Academy
         </Typography>
       </Box>
 
+
+      {/* Navigation List */}
       <List sx={{ px: 2, flexGrow: 1 }}>
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -121,7 +130,7 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
                   primary={item.text}
                   primaryTypographyProps={{
                     fontSize: '0.925rem',
-                    fontWeight: isActive ? 600 : 500,
+                    fontWeight: isActive ? 700 : 500,
                   }}
                 />
               </ListItemButton>
@@ -130,11 +139,52 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
         })}
       </List>
 
-      <Box sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider', textAlign: 'center' }}>
-        <Typography variant="caption" color="text.disabled">
-          DMS Frontend v1.0.0
-        </Typography>
-      </Box>
+      {/* Support and Logout Section */}
+      <List sx={{ px: 2, borderTop: '1px solid', borderColor: 'divider', pt: 1.5, pb: 1.5 }}>
+        <ListItem disablePadding sx={{ mb: 0.5 }}>
+          <ListItemButton 
+            onClick={() => alert('Support module is coming soon!')}
+            sx={{ 
+              borderRadius: 2, 
+              py: 1.25, 
+              px: 2, 
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+                color: 'text.primary',
+                '& .MuiListItemIcon-root': { color: 'text.primary' }
+              }
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40, color: 'text.secondary' }}>
+              <HelpIcon />
+            </ListItemIcon>
+            <ListItemText primary="Support" primaryTypographyProps={{ fontSize: '0.925rem', fontWeight: 500 }} />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding sx={{ mb: 0.5 }}>
+          <ListItemButton 
+            onClick={logout} 
+            sx={{ 
+              borderRadius: 2, 
+              py: 1.25, 
+              px: 2, 
+              color: 'error.main',
+              '&:hover': {
+                backgroundColor: 'error.lighter',
+                color: 'error.dark',
+                '& .MuiListItemIcon-root': { color: 'error.dark' }
+              }
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40, color: 'error.main' }}>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText primary="Logout" primaryTypographyProps={{ fontSize: '0.925rem', fontWeight: 700 }} />
+          </ListItemButton>
+        </ListItem>
+      </List>
+
     </Box>
   );
 
@@ -145,7 +195,7 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
         variant="temporary"
         open={mobileOpen}
         onClose={onSidebarToggle}
-        ModalProps={{ keepMounted: true }} // Better open performance on mobile
+        ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: 'block', md: 'none' },
           '& .MuiDrawer-paper': {
@@ -172,7 +222,7 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
             borderRight: '1px solid',
             borderColor: 'divider',
             backgroundImage: 'none',
-            backgroundColor: 'background.default',
+            backgroundColor: 'background.paper',
           },
         }}
         open

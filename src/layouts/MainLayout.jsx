@@ -19,43 +19,40 @@ const MainLayout = () => {
       sx={{
         display: 'flex',
         minHeight: '100vh',
-        flexDirection: 'column',
         backgroundColor: 'background.default',
       }}
     >
-      {/* Upper toolbar */}
-      <Navbar onSidebarToggle={handleSidebarToggle} />
+      {/* Left navigation sidebar (full-height on desktop) */}
+      <Sidebar mobileOpen={mobileOpen} onSidebarToggle={handleSidebarToggle} />
 
-      <Box sx={{ display: 'flex', flexGrow: 1 }}>
-        {/* Left navigation sidebar */}
-        <Sidebar mobileOpen={mobileOpen} onSidebarToggle={handleSidebarToggle} />
+      {/* Right content view area */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          minHeight: '100vh',
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+        }}
+      >
+        {/* Upper toolbar (placed inside the right content container) */}
+        <Navbar onSidebarToggle={handleSidebarToggle} />
 
-        {/* Right content view area */}
+        {/* Main content body */}
         <Box
           component="main"
           sx={{
             flexGrow: 1,
+            p: { xs: 2.5, md: 4 },
             display: 'flex',
             flexDirection: 'column',
-            width: { md: `calc(100% - ${drawerWidth}px)` },
-            minHeight: '100%',
           }}
         >
-          {/* Main content body */}
-          <Box
-            sx={{
-              flexGrow: 1,
-              p: { xs: 2.5, md: 4 },
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <Outlet />
-          </Box>
-
-          {/* Lower footer */}
-          <Footer />
+          <Outlet />
         </Box>
+
+        {/* Lower footer */}
+        <Footer />
       </Box>
     </Box>
   );

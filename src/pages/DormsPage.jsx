@@ -153,6 +153,7 @@ const DormsPage = () => {
 
   // Dialog States
   const [openDormDialog, setOpenDormDialog] = useState(false);
+  const [confirmDeleteDorm, setConfirmDeleteDorm] = useState(null); // holds the dorm object to delete
   const [openStudentDialog, setOpenStudentDialog] = useState(false);
   const [openAssignDialog, setOpenAssignDialog] = useState(false);
 
@@ -253,6 +254,25 @@ const DormsPage = () => {
       toast.error(error.response?.data?.name?.[0] || 'Failed to create dormitory');
     } finally {
       setDormSubmitLoading(false);
+    }
+  };
+
+  const handleDeleteDorm = async () => {
+    if (!confirmDeleteDorm) return;
+    const loadingToast = toast.loading(`Deleting '${confirmDeleteDorm.name}'...`);
+    try {
+      await roomsApi.deleteDorm(confirmDeleteDorm.id);
+      toast.success(`Dormitory '${confirmDeleteDorm.name}' deleted successfully!`, { id: loadingToast });
+      // If the deleted dorm was selected, clear selection
+      if (selectedDormId === confirmDeleteDorm.id) setSelectedDormId(null);
+      setConfirmDeleteDorm(null);
+      fetchData();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.detail || 'Failed to delete dormitory.',
+        { id: loadingToast }
+      );
+      setConfirmDeleteDorm(null);
     }
   };
 
@@ -485,9 +505,20 @@ const DormsPage = () => {
                       }}
                     >
                       <CardContent sx={{ p: 2.5 }}>
-                        <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
-                          {dorm.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                          <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                            {dorm.name}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            title="Delete Dormitory"
+                            onClick={(e) => { e.stopPropagation(); setConfirmDeleteDorm(dorm); }}
+                            sx={{ ml: 1, opacity: 0.7, '&:hover': { opacity: 1 } }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                           <Typography variant="body2" color="text.secondary">
                             Rooms: {stats.roomsCount}
@@ -669,6 +700,26 @@ const DormsPage = () => {
       {/* ════════════════════════════════════════════════════════════
           DIALOGS
           ════════════════════════════════════════════════════════════ */}
+
+      {/* Confirm Delete Dorm Dialog */}
+      <Dialog open={!!confirmDeleteDorm} onClose={() => setConfirmDeleteDorm(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Delete Dormitory</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete <strong>{confirmDeleteDorm?.name}</strong>?{' '}
+            This will permanently remove the dormitory and all its rooms.
+          </Typography>
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+            Note: Dormitories with occupied rooms cannot be deleted.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => setConfirmDeleteDorm(null)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteDorm}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Add Dormitory Dialog */}
       <Dialog open={openDormDialog} onClose={() => setOpenDormDialog(false)} maxWidth="xs" fullWidth>

@@ -12,4 +12,7 @@ export const roomsApi = {
     
   getRoomDetails: (id) => 
     api.get(`/rooms/${id}/`),
+
+  deleteDorm: (id) =>
+    api.delete(`/dorms/${id}/`),
 };

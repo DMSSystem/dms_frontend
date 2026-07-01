@@ -196,6 +196,20 @@ const StudentsPage = () => {
     }));
   };
 
+  const handleParentChange = (e) => {
+    const parentId = e.target.value;
+    const selectedParent = parents.find(p => p.id === parentId);
+    setFormData(prev => ({
+      ...prev,
+      parent: parentId,
+      // Auto-populate emergency contact from parent's profile if not already filled
+      contact_name: selectedParent
+        ? (selectedParent.first_name + ' ' + selectedParent.last_name).trim() || selectedParent.username
+        : prev.contact_name,
+      contact_phone: selectedParent?.phone || prev.contact_phone,
+    }));
+  };
+
   const handleSubmitAddStudent = async (e) => {
     e.preventDefault();
     if (!formData.full_name || !formData.admission_no || !formData.grade || !formData.stream) {
@@ -306,13 +320,34 @@ const StudentsPage = () => {
   };
 
   const handleActionClick = (actionName) => {
-    toast.success(`${actionName} clicked for ${selectedStudent?.full_name}`);
+    toast(`${actionName} clicked for ${selectedStudent?.full_name}`);
     handleCloseMenu();
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!selectedStudent) return;
+    handleCloseMenu();
+    if (!window.confirm(`Are you sure you want to permanently delete ${selectedStudent.full_name} (${selectedStudent.admission_no})?\n\nThis action cannot be undone.`)) {
+      return;
+    }
+    const loadingToast = toast.loading(`Deleting ${selectedStudent.full_name}...`);
+    try {
+      await studentsApi.deleteStudent(selectedStudent.id);
+      toast.success(`${selectedStudent.full_name} deleted successfully.`, { id: loadingToast });
+      loadData();
+    } catch (error) {
+      const msg = error.response?.data?.detail || 'Failed to delete student.';
+      toast.error(msg, { id: loadingToast });
+    }
   };
 
   const handleExportCSV = () => {
     toast.success('Students directory exported to CSV.');
   };
+
+  // Filter out parents that are already assigned to a student
+  const assignedParentIds = students.map(s => s.parent).filter(Boolean);
+  const availableParents = parents.filter(p => !assignedParentIds.includes(p.id));
 
   if (loading) {
     return (
@@ -718,7 +753,7 @@ const StudentsPage = () => {
                               {student.parent_username ? `${student.parent_username}@email.com` : 'no.parent@email.com'}
                             </Typography>
                             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 650 }}>
-                              +254 700 000000
+                              {student.emergency_contacts?.[0]?.phone || 'No phone on record'}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -813,6 +848,10 @@ const StudentsPage = () => {
             <MenuItem onClick={() => handleActionClick('View Profile')}>View Profile</MenuItem>
             <MenuItem onClick={() => handleActionClick('Edit Student')}>Edit Student</MenuItem>
             <MenuItem onClick={() => handleActionClick('Manage Leave')}>Manage Leave</MenuItem>
+            <Divider sx={{ my: 0.5 }} />
+            <MenuItem onClick={handleDeleteStudent} sx={{ color: 'error.main', fontWeight: 700 }}>
+              Delete Student
+            </MenuItem>
           </Menu>
 
           {/* Add Student Dialog */}
@@ -900,11 +939,11 @@ const StudentsPage = () => {
                         labelId="add-parent-label"
                         name="parent"
                         value={formData.parent}
-                        onChange={handleInputChange}
+                        onChange={handleParentChange}
                         label="Parent / Guardian"
                       >
                         <MenuItem value=""><em>None / Unlinked</em></MenuItem>
-                        {parents.map((p) => (
+                        {availableParents.map((p) => (
                           <MenuItem key={p.id} value={p.id}>
                             {p.first_name} {p.last_name} ({p.username})
                           </MenuItem>

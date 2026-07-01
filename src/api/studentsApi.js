@@ -15,5 +15,8 @@ export const studentsApi = {
   
   updateStudent: (id, data) => 
     api.patch(`/students/${id}/`, data),
+
+  deleteStudent: (id) =>
+    api.delete(`/students/${id}/`),
 };
 export default studentsApi;

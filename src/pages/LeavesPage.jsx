@@ -668,6 +668,7 @@ const LeavesPage = () => {
                     required
                     fullWidth
                     InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     value={leaveDate}
                     onChange={(e) => setLeaveDate(e.target.value)}
                   />
@@ -679,6 +680,7 @@ const LeavesPage = () => {
                     required
                     fullWidth
                     InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     value={returnDate}
                     onChange={(e) => setReturnDate(e.target.value)}
                   />

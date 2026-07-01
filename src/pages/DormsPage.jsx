@@ -165,6 +165,8 @@ const DormsPage = () => {
   // Form States - Student Creation
   const [studentName, setStudentName] = useState('');
   const [admissionNo, setAdmissionNo] = useState('');
+  const [grade, setGrade] = useState('');
+  const [stream, setStream] = useState('');
   const [assignRoomDuringCreation, setAssignRoomDuringCreation] = useState('');
   const [emergencyContacts, setEmergencyContacts] = useState([
     { name: '', relationship: 'Father', phone: '' }
@@ -275,8 +277,8 @@ const DormsPage = () => {
 
   const handleAddStudent = async (e) => {
     e.preventDefault();
-    if (!studentName || !admissionNo) {
-      toast.error('Full Name and Admission Number are required');
+    if (!studentName || !admissionNo || !grade || !stream) {
+      toast.error('Full Name, Admission Number, Grade, and Stream are required');
       return;
     }
 
@@ -292,6 +294,8 @@ const DormsPage = () => {
       const payload = {
         full_name: studentName,
         admission_no: admissionNo,
+        grade: grade,
+        stream: stream,
         room: assignRoomDuringCreation || null,
         emergency_contacts: validContacts
       };
@@ -302,6 +306,8 @@ const DormsPage = () => {
       // Reset states
       setStudentName('');
       setAdmissionNo('');
+      setGrade('');
+      setStream('');
       setAssignRoomDuringCreation('');
       setEmergencyContacts([{ name: '', relationship: 'Father', phone: '' }]);
       fetchData();
@@ -591,6 +597,7 @@ const DormsPage = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Student Name</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Admission Number</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Class & Stream</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Parent Profile</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Room Location</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
@@ -601,6 +608,9 @@ const DormsPage = () => {
                   <TableRow key={student.id} hover>
                     <TableCell sx={{ fontWeight: 600 }}>{student.full_name}</TableCell>
                     <TableCell>{student.admission_no}</TableCell>
+                    <TableCell>
+                      {student.grade ? `${student.grade} - ${student.stream || ''}` : 'N/A'}
+                    </TableCell>
                     <TableCell>
                       {student.parent_username ? (
                         <Chip label={student.parent_username} size="small" color="success" variant="outlined" />
@@ -643,7 +653,7 @@ const DormsPage = () => {
 
                 {filteredStudents.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                       <Typography variant="body2" color="text.secondary">
                         No students found matching filters.
                       </Typography>
@@ -728,6 +738,28 @@ const DormsPage = () => {
                     required
                     value={admissionNo}
                     onChange={(e) => setAdmissionNo(e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Grade"
+                    placeholder="e.g. Form 4"
+                    fullWidth
+                    required
+                    value={grade}
+                    onChange={(e) => setGrade(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Stream"
+                    placeholder="e.g. Blue"
+                    fullWidth
+                    required
+                    value={stream}
+                    onChange={(e) => setStream(e.target.value)}
                   />
                 </Grid>
               </Grid>

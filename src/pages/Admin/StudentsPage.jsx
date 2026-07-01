@@ -22,6 +22,11 @@ import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Menu from '@mui/material/Menu';
 import IconButton from '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
 import toast, { Toaster } from 'react-hot-toast';
 
 // Icons
@@ -40,6 +45,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { studentsApi } from '../../api/studentsApi';
 import { roomsApi } from '../../api/roomsApi';
 import { leavesApi } from '../../api/leavesApi';
+import { usersApi } from '../../api/usersApi';
 
 const StudentsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -59,7 +65,7 @@ const StudentsPage = () => {
 
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
-  const [houseFilter, setHouseFilter] = useState('All Houses');
+  const [dormFilter, setDormFilter] = useState('All Dormitories');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [yearFilter, setYearFilter] = useState('All Years');
 
@@ -67,74 +73,171 @@ const StudentsPage = () => {
   const [page, setPage] = useState(1);
   const itemsPerPage = 4;
 
+  // Add Student Dialog states
+  const [openAddDialog, setOpenAddDialog] = useState(false);
+  const [parents, setParents] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    admission_no: '',
+    grade: '',
+    stream: '',
+    room: '',
+    parent: '',
+    contact_name: '',
+    contact_relationship: 'Father',
+    contact_phone: ''
+  });
+
   // Actions menu anchor
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch data from backend
+      const [studentsRes, roomsRes, leavesRes, dormsRes] = await Promise.all([
+        studentsApi.getStudents().catch(err => ({ data: [] })),
+        roomsApi.getRooms().catch(err => ({ data: [] })),
+        leavesApi.getLeaves().catch(err => ({ data: [] })),
+        roomsApi.getDorms().catch(err => ({ data: [] }))
+      ]);
+
+      const studentList = studentsRes.data?.results || studentsRes.data || [];
+      const roomList = roomsRes.data?.results || roomsRes.data || [];
+      const leavesList = leavesRes.data?.results || leavesRes.data || [];
+      const dormList = dormsRes.data?.results || dormsRes.data || [];
+
+      setStudents(studentList);
+      setRooms(roomList);
+      setLeaves(leavesList);
+      setDorms(dormList);
+
+      // Calculate Stats
+      // 1. Total Students
+      setTotalStudentsCount(studentList.length);
+
+      // 2. Currently Out (approved leave, date is active)
+      const today = new Date().setHours(0, 0, 0, 0);
+      const outList = leavesList.filter(l => {
+        if (l.status !== 'approved' && l.status !== 'completed') return false;
+        const returnDate = new Date(l.return_date).setHours(0, 0, 0, 0);
+        return returnDate >= today && l.status === 'approved';
+      });
+      setCurrentlyOutCount(outList.length);
+
+      // 3. Overdue Returns (approved leave, return date in the past)
+      const overdueList = leavesList.filter(l => {
+        if (l.status !== 'approved') return false;
+        const returnDate = new Date(l.return_date).setHours(0, 0, 0, 0);
+        return returnDate < today;
+      });
+      setOverdueCount(overdueList.length);
+
+      // 4. Available Beds (total capacity - total occupancy)
+      let totalCapacity = 0;
+      let totalOccupancy = 0;
+      roomList.forEach(r => {
+        totalCapacity += r.capacity || 0;
+        totalOccupancy += r.current_occupancy || 0;
+      });
+      setAvailableBedsCount(Math.max(0, totalCapacity - totalOccupancy));
+
+    } catch (err) {
+      console.error('Error loading students directory:', err);
+      setError('Failed to fetch students data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Fetch data from backend
-        const [studentsRes, roomsRes, leavesRes, dormsRes] = await Promise.all([
-          studentsApi.getStudents().catch(err => ({ data: [] })),
-          roomsApi.getRooms().catch(err => ({ data: [] })),
-          leavesApi.getLeaves().catch(err => ({ data: [] })),
-          roomsApi.getDorms().catch(err => ({ data: [] }))
-        ]);
-
-        const studentList = studentsRes.data?.results || studentsRes.data || [];
-        const roomList = roomsRes.data?.results || roomsRes.data || [];
-        const leavesList = leavesRes.data?.results || leavesRes.data || [];
-        const dormList = dormsRes.data?.results || dormsRes.data || [];
-
-        setStudents(studentList);
-        setRooms(roomList);
-        setLeaves(leavesList);
-        setDorms(dormList);
-
-        // Calculate Stats
-        // 1. Total Students
-        setTotalStudentsCount(studentList.length);
-
-        // 2. Currently Out (approved leave, date is active)
-        const today = new Date().setHours(0, 0, 0, 0);
-        const outList = leavesList.filter(l => {
-          if (l.status !== 'approved' && l.status !== 'completed') return false;
-          const returnDate = new Date(l.return_date).setHours(0, 0, 0, 0);
-          return returnDate >= today && l.status === 'approved';
-        });
-        setCurrentlyOutCount(outList.length);
-
-        // 3. Overdue Returns (approved leave, return date in the past)
-        const overdueList = leavesList.filter(l => {
-          if (l.status !== 'approved') return false;
-          const returnDate = new Date(l.return_date).setHours(0, 0, 0, 0);
-          return returnDate < today;
-        });
-        setOverdueCount(overdueList.length);
-
-        // 4. Available Beds (total capacity - total occupancy)
-        let totalCapacity = 0;
-        let totalOccupancy = 0;
-        roomList.forEach(r => {
-          totalCapacity += r.capacity || 0;
-          totalOccupancy += r.current_occupancy || 0;
-        });
-        setAvailableBedsCount(Math.max(0, totalCapacity - totalOccupancy));
-
-      } catch (err) {
-        console.error('Error loading students directory:', err);
-        setError('Failed to fetch students data.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, []);
+
+  const fetchParents = async () => {
+    try {
+      const res = await usersApi.getUsersByRole('parent');
+      setParents(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch parent users:", err);
+      toast.error("Failed to load parent accounts.");
+    }
+  };
+
+  const handleOpenAddDialog = () => {
+    setFormData({
+      full_name: '',
+      admission_no: '',
+      grade: '',
+      stream: '',
+      room: '',
+      parent: '',
+      contact_name: '',
+      contact_relationship: 'Father',
+      contact_phone: ''
+    });
+    setOpenAddDialog(true);
+    fetchParents();
+  };
+
+  const handleCloseAddDialog = () => {
+    setOpenAddDialog(false);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmitAddStudent = async (e) => {
+    e.preventDefault();
+    if (!formData.full_name || !formData.admission_no || !formData.grade || !formData.stream) {
+      toast.error('Full Name, Admission Number, Grade, and Stream are required.');
+      return;
+    }
+    if (!formData.contact_name || !formData.contact_phone) {
+      toast.error('Emergency contact details are required.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        full_name: formData.full_name,
+        admission_no: formData.admission_no,
+        grade: formData.grade,
+        stream: formData.stream,
+        room: formData.room || null,
+        parent: formData.parent || null,
+        emergency_contacts: [
+          {
+            name: formData.contact_name,
+            relationship: formData.contact_relationship,
+            phone: formData.contact_phone
+          }
+        ]
+      };
+      await studentsApi.createStudent(payload);
+      toast.success('Student added successfully!');
+      setOpenAddDialog(false);
+      loadData();
+    } catch (error) {
+      console.error('Error creating student:', error);
+      const errorMsg = error.response?.data?.detail || 
+                       (error.response?.data?.admission_no && `Admission No: ${error.response.data.admission_no[0]}`) ||
+                       'Failed to create student.';
+      toast.error(errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Get active leave status for a student
   const getStudentLeaveStatus = (studentId) => {
@@ -173,9 +276,9 @@ const StudentsPage = () => {
     const searchMatch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.admission_no.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // House match
-    const houseName = student.room_details?.dorm_name || 'No House';
-    const houseMatch = houseFilter === 'All Houses' || houseName === houseFilter;
+    // Dormitory match
+    const dormName = student.room_details?.dorm_name || 'No Dormitory';
+    const dormMatch = dormFilter === 'All Dormitories' || dormName === dormFilter;
 
     // Status match
     const leaveStatus = getStudentLeaveStatus(student.id);
@@ -185,7 +288,7 @@ const StudentsPage = () => {
     const yearGroup = getYearGroup(student);
     const yearMatch = yearFilter === 'All Years' || yearGroup === yearFilter;
 
-    return searchMatch && houseMatch && statusMatch && yearMatch;
+    return searchMatch && dormMatch && statusMatch && yearMatch;
   });
 
   // Paginated students
@@ -230,7 +333,7 @@ const StudentsPage = () => {
             Student Directory
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
-            Manage enrollments, house assignments, and active leave statuses.
+            Manage enrollments, dormitory assignments, and active leave statuses.
           </Typography>
         </Box>
 
@@ -294,7 +397,7 @@ const StudentsPage = () => {
                 boxShadow: 'none',
               }
             }}
-            onClick={() => toast('Add New Student panel')}
+            onClick={handleOpenAddDialog}
           >
             Add New Student
           </Button>
@@ -404,7 +507,7 @@ const StudentsPage = () => {
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
               {/* Search Box */}
               <OutlinedInput
-                placeholder="Search students, house, or ID..."
+                placeholder="Search students, dormitory, or ID..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -422,12 +525,12 @@ const StudentsPage = () => {
                 }}
               />
 
-              {/* By House select */}
+              {/* By Dormitory select */}
               <FormControl sx={{ minWidth: 150, height: 42 }}>
                 <Select
-                  value={houseFilter}
+                  value={dormFilter}
                   onChange={(e) => {
-                    setHouseFilter(e.target.value);
+                    setDormFilter(e.target.value);
                     setPage(1);
                   }}
                   displayEmpty
@@ -439,11 +542,11 @@ const StudentsPage = () => {
                     '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                   }}
                 >
-                  <MenuItem value="All Houses">All Houses</MenuItem>
+                  <MenuItem value="All Dormitories">All Dormitories</MenuItem>
                   {dorms.map(d => (
                     <MenuItem key={d.id} value={d.name}>{d.name}</MenuItem>
                   ))}
-                  <MenuItem value="No House">No House</MenuItem>
+                  <MenuItem value="No Dormitory">No Dormitory</MenuItem>
                 </Select>
               </FormControl>
 
@@ -508,7 +611,7 @@ const StudentsPage = () => {
               <TableHead>
                 <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider', px: 1, py: 1.5, fontWeight: 750, color: 'text.secondary', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' } }}>
                   <TableCell>Name</TableCell>
-                  <TableCell>House</TableCell>
+                  <TableCell>Dormitory</TableCell>
                   <TableCell>Year</TableCell>
                   <TableCell>Leave Status</TableCell>
                   <TableCell>Contact</TableCell>
@@ -528,7 +631,7 @@ const StudentsPage = () => {
                   paginatedStudents.map((student) => {
                     const leaveStatus = getStudentLeaveStatus(student.id);
                     const yearGroup = getYearGroup(student);
-                    const houseName = student.room_details?.dorm_name || 'No House';
+                    const dormName = student.room_details?.dorm_name || 'No Dormitory';
                     
                     return (
                       <TableRow key={student.id} sx={{ '& td': { borderBottom: '1px solid', borderColor: 'divider', px: 1, py: 2.25 } }}>
@@ -558,7 +661,7 @@ const StudentsPage = () => {
                           </Box>
                         </TableCell>
 
-                        {/* House Column */}
+                        {/* Dormitory Column */}
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box
@@ -566,17 +669,17 @@ const StudentsPage = () => {
                                 width: 8,
                                 height: 8,
                                 borderRadius: '50%',
-                                bgcolor: houseName.toLowerCase().includes('emerald') 
+                                bgcolor: dormName.toLowerCase().includes('emerald') 
                                   ? 'success.main' 
-                                  : houseName.toLowerCase().includes('amber') 
+                                  : dormName.toLowerCase().includes('amber') 
                                     ? 'warning.main' 
-                                    : houseName.toLowerCase().includes('indigo') 
+                                    : dormName.toLowerCase().includes('indigo') 
                                       ? 'primary.main' 
                                       : 'text.disabled'
                               }}
                             />
                             <Typography variant="body2" sx={{ fontWeight: 650, color: 'text.primary' }}>
-                              {houseName}
+                              {dormName}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -584,7 +687,7 @@ const StudentsPage = () => {
                         {/* Year Column */}
                         <TableCell>
                           <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 650 }}>
-                            {yearGroup}
+                            {student.grade ? `${student.grade} - ${student.stream || ''}` : yearGroup}
                           </Typography>
                         </TableCell>
 
@@ -711,6 +814,161 @@ const StudentsPage = () => {
             <MenuItem onClick={() => handleActionClick('Edit Student')}>Edit Student</MenuItem>
             <MenuItem onClick={() => handleActionClick('Manage Leave')}>Manage Leave</MenuItem>
           </Menu>
+
+          {/* Add Student Dialog */}
+          <Dialog 
+            open={openAddDialog} 
+            onClose={handleCloseAddDialog}
+            fullWidth
+            maxWidth="md"
+            PaperProps={{
+              sx: { borderRadius: 3, p: 1 }
+            }}
+          >
+            <DialogTitle sx={{ fontWeight: 800, fontSize: '1.5rem', pb: 1 }}>
+              Add New Student
+            </DialogTitle>
+            <form onSubmit={handleSubmitAddStudent}>
+              <DialogContent dividers>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'primary.main' }}>
+                  Student Information
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Full Name"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Admission Number"
+                      name="admission_no"
+                      value={formData.admission_no}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Grade (e.g. Form 4)"
+                      name="grade"
+                      value={formData.grade}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Stream (e.g. Blue)"
+                      name="stream"
+                      value={formData.stream}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                      <InputLabel id="add-room-label">Dormitory Room</InputLabel>
+                      <Select
+                        labelId="add-room-label"
+                        name="room"
+                        value={formData.room}
+                        onChange={handleInputChange}
+                        label="Dormitory Room"
+                      >
+                        <MenuItem value=""><em>None / Unassigned</em></MenuItem>
+                        {rooms.map((r) => (
+                          <MenuItem key={r.id} value={r.id}>
+                            {r.dorm_name} - Room {r.room_number} ({r.current_occupancy}/{r.capacity})
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                      <InputLabel id="add-parent-label">Parent / Guardian</InputLabel>
+                      <Select
+                        labelId="add-parent-label"
+                        name="parent"
+                        value={formData.parent}
+                        onChange={handleInputChange}
+                        label="Parent / Guardian"
+                      >
+                        <MenuItem value=""><em>None / Unlinked</em></MenuItem>
+                        {parents.map((p) => (
+                          <MenuItem key={p.id} value={p.id}>
+                            {p.first_name} {p.last_name} ({p.username})
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mt: 4, mb: 2, color: 'primary.main' }}>
+                  Emergency Contact Information
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Contact Name"
+                      name="contact_name"
+                      value={formData.contact_name}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <FormControl fullWidth>
+                      <InputLabel id="add-relationship-label">Relationship</InputLabel>
+                      <Select
+                        labelId="add-relationship-label"
+                        name="contact_relationship"
+                        value={formData.contact_relationship}
+                        onChange={handleInputChange}
+                        label="Relationship"
+                      >
+                        <MenuItem value="Father">Father</MenuItem>
+                        <MenuItem value="Mother">Mother</MenuItem>
+                        <MenuItem value="Guardian">Guardian</MenuItem>
+                        <MenuItem value="Spouse">Spouse</MenuItem>
+                        <MenuItem value="Other">Other</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Contact Phone"
+                      name="contact_phone"
+                      value={formData.contact_phone}
+                      onChange={handleInputChange}
+                      placeholder="e.g. +254712345678"
+                    />
+                  </Grid>
+                </Grid>
+              </DialogContent>
+              <DialogActions sx={{ p: 2.5 }}>
+                <Button onClick={handleCloseAddDialog} variant="outlined" color="secondary" sx={{ fontWeight: 700, borderRadius: 2 }}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={submitting} variant="contained" sx={{ fontWeight: 700, borderRadius: 2, bgcolor: '#0B2545', color: '#FFF', '&:hover': { bgcolor: '#134074' } }}>
+                  {submitting ? 'Adding...' : 'Add Student'}
+                </Button>
+              </DialogActions>
+            </form>
+          </Dialog>
 
         </CardContent>
       </Card>

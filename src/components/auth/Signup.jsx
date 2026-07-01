@@ -186,7 +186,7 @@ const Signup = () => {
                   Parent
                 </ToggleButton>
                 <ToggleButton value="officer" sx={{ py: 1, fontWeight: 600 }}>
-                  Officer / Staff
+                  Boarding Master / Staff
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>

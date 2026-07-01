@@ -44,11 +44,11 @@ const DashboardPage = () => {
   const [pendingLeavesCount, setPendingLeavesCount] = useState(0);
   const [openRepairsCount, setOpenRepairsCount] = useState(0);
   const [criticalRepairsCount, setCriticalRepairsCount] = useState(0);
-  const [houseCapacityPercentage, setHouseCapacityPercentage] = useState(0);
+  const [dormCapacityPercentage, setDormCapacityPercentage] = useState(0);
   
   // Lists
   const [activityFeed, setActivityFeed] = useState([]);
-  const [currentWardens, setCurrentWardens] = useState([]);
+  const [currentBoardingMasters, setCurrentBoardingMasters] = useState([]);
   const [urgentAlerts, setUrgentAlerts] = useState([]);
 
   useEffect(() => {
@@ -92,7 +92,7 @@ const DashboardPage = () => {
         const calculatedPercentage = totalCapacity > 0 
           ? Math.round((totalOccupancy / totalCapacity) * 100) 
           : 0;
-        setHouseCapacityPercentage(calculatedPercentage);
+        setDormCapacityPercentage(calculatedPercentage);
 
         // Process Maintenance / Repairs dynamically
         const liveMaintenanceList = maintenanceRes.data?.results || maintenanceRes.data || [];
@@ -101,26 +101,26 @@ const DashboardPage = () => {
         setOpenRepairsCount(openRepairs.length);
         setCriticalRepairsCount(criticalRepairs.length);
 
-        // Map Wardens (Boarding Officers) from database
+        // Map Boarding Masters from database
         const officers = wardensRes.data || [];
-        const wardensList = officers.map(o => {
-          let houseName = 'Boarding House';
-          // Assign visual houses based on backend configurations or names
+        const boardingMastersList = officers.map(o => {
+          let dormName = 'Boarding Dormitory';
+          // Assign visual dorms based on backend configurations or names
           if (o.username.toLowerCase().includes('brown') || o.last_name?.toLowerCase().includes('brown')) {
-            houseName = 'Amber House';
+            dormName = 'Amber Dormitory';
           } else if (o.username.toLowerCase().includes('davis') || o.last_name?.toLowerCase().includes('davis')) {
-            houseName = 'Indigo House';
+            dormName = 'Indigo Dormitory';
           } else if (o.username.toLowerCase().includes('smith') || o.last_name?.toLowerCase().includes('smith')) {
-            houseName = 'Emerald House';
+            dormName = 'Emerald Dormitory';
           }
           return {
             name: `${o.first_name || ''} ${o.last_name || o.username}`.trim(),
             initials: ((o.first_name ? o.first_name[0] : '') + (o.last_name ? o.last_name[0] : '')).toUpperCase() || o.username[0].toUpperCase(),
-            house: houseName,
+            dorm: dormName,
             shift: 'Shift Ends 10PM'
           };
         });
-        setCurrentWardens(wardensList);
+        setCurrentBoardingMasters(boardingMastersList);
 
         // Build Activity Feed strictly from actual database events
         const feed = [];
@@ -162,9 +162,9 @@ const DashboardPage = () => {
             statusColor = 'error';
           }
 
-          let warden = 'Awaiting Warden';
+          let warden = 'Awaiting Boarding Master';
           if (leave.approved_by_username) {
-            warden = `Warden ${leave.approved_by_username}`;
+            warden = `Boarding Master ${leave.approved_by_username}`;
           }
 
           feed.push({
@@ -206,7 +206,7 @@ const DashboardPage = () => {
             student: desc.substring(0, 25) + (desc.length > 25 ? '...' : ''),
             action: 'Maintenance Report',
             house: dormName,
-            warden: `Warden ${reporter}`,
+            warden: `Boarding Master ${reporter}`,
             timestamp: formatTime(m.reported_date),
             status: statusLabel,
             statusColor: statusColor,
@@ -242,7 +242,7 @@ const DashboardPage = () => {
             id: `alert-leave-${leave.id}`,
             type: 'Attendance Breach',
             message: `${leave.student_details?.full_name || 'Student'} missing from return schedule`,
-            meta: `${leave.student_details?.room_details?.dorm_name || 'Campus House'} • Return due: ${leave.return_date}`
+            meta: `${leave.student_details?.room_details?.dorm_name || 'Campus Dormitory'} • Return due: ${leave.return_date}`
           });
         });
         
@@ -289,7 +289,7 @@ const DashboardPage = () => {
             Dashboard Overview
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
-            Welcome back. Here is the status across all Houses for today.
+            Welcome back. Here is the status across all Dormitories for today.
           </Typography>
         </Box>
 
@@ -347,7 +347,7 @@ const DashboardPage = () => {
                 </Paper>
                 {pendingLeavesCount > 0 && (
                   <Chip
-                    label="Awaiting Warden"
+                    label="Awaiting Boarding Master"
                     size="small"
                     sx={{
                       fontWeight: 700,
@@ -407,7 +407,7 @@ const DashboardPage = () => {
           </Card>
         </Grid>
 
-        {/* House Capacity Card */}
+        {/* Dormitory Capacity Card */}
         <Grid item xs={12} sm={6} lg={3}>
           <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 1 }}>
             <CardContent sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -418,17 +418,17 @@ const DashboardPage = () => {
                 <Box sx={{ width: 60, mt: 1 }}>
                   <LinearProgress
                     variant="determinate"
-                    value={houseCapacityPercentage}
+                    value={dormCapacityPercentage}
                     color="success"
                     sx={{ height: 6, borderRadius: 3, bgcolor: 'action.hover' }}
                   />
                 </Box>
               </Box>
               <Typography variant="caption" sx={{ textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.secondary', fontWeight: 800, display: 'block', mb: 1 }}>
-                HOUSE CAPACITY
+                DORMITORY CAPACITY
               </Typography>
               <Typography variant="h3" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.03em' }}>
-                {houseCapacityPercentage}%
+                {dormCapacityPercentage}%
               </Typography>
             </CardContent>
           </Card>
@@ -456,8 +456,8 @@ const DashboardPage = () => {
                   <TableHead>
                     <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider', px: 1, py: 1.5, fontWeight: 750, color: 'text.secondary', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' } }}>
                       <TableCell>Item / Description</TableCell>
-                      <TableCell>House</TableCell>
-                      <TableCell>Warden / Staff</TableCell>
+                      <TableCell>Dormitory</TableCell>
+                      <TableCell>Boarding Master / Staff</TableCell>
                       <TableCell>Timestamp</TableCell>
                       <TableCell align="right">Status</TableCell>
                     </TableRow>
@@ -637,7 +637,7 @@ const DashboardPage = () => {
                     Live Sync Active
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, mb: 3, maxW: '80%', mx: 'auto', lineHeight: 1.5 }}>
-                    All Warden mobile terminals are currently synced with the central student database.
+                    All Boarding Master mobile terminals are currently synced with the central student database.
                   </Typography>
                   
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -727,20 +727,20 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          {/* Current Wardens Card */}
+          {/* Current Boarding Masters Card */}
           <Card sx={{ width: '100%', bgcolor: 'primary.dark', color: '#FFFFFF', backgroundImage: 'none' }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ fontWeight: 800, mb: 3, color: '#FFFFFF' }}>
-                Current Wardens
+                Current Boarding Masters
               </Typography>
 
-              {currentWardens.length === 0 ? (
+              {currentBoardingMasters.length === 0 ? (
                 <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', fontStyle: 'italic', py: 2 }}>
-                  No active wardens on duty.
+                  No active boarding masters on duty.
                 </Typography>
               ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.25 }}>
-                  {currentWardens.map((warden, index) => (
+                  {currentBoardingMasters.map((warden, index) => (
                     <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Avatar
                         sx={{
@@ -760,7 +760,7 @@ const DashboardPage = () => {
                           {warden.name}
                         </Typography>
                         <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)', fontWeight: 650 }}>
-                          {warden.house} • {warden.shift}
+                          {warden.dorm || warden.house} • {warden.shift}
                         </Typography>
                       </Box>
                     </Box>

@@ -46,7 +46,7 @@ const Navbar = ({ onSidebarToggle }) => {
   // Get user initials for avatar
   const getInitials = () => {
     if (!user) return 'U';
-    if (user.role === 'admin') return 'SW'; // Senior Warden
+    if (user.role === 'admin') return 'SBM'; // Senior Boarding Master
     const first = user.first_name ? user.first_name[0] : '';
     const last = user.last_name ? user.last_name[0] : '';
     return (first + last).toUpperCase() || user.username[0].toUpperCase();
@@ -55,9 +55,9 @@ const Navbar = ({ onSidebarToggle }) => {
   const getRoleLabel = (role) => {
     switch (role) {
       case 'admin':
-        return 'Administrator';
+        return 'Senior Boarding Master';
       case 'officer':
-        return 'Officer';
+        return 'Boarding Master';
       case 'parent':
         return 'Parent';
       default:
@@ -159,10 +159,10 @@ const Navbar = ({ onSidebarToggle }) => {
             {/* User details on the left of Avatar */}
             <Box sx={{ display: { xs: 'none', md: 'block' }, textAlign: 'right' }}>
               <Typography variant="body2" sx={{ fontWeight: 850, color: 'text.primary', lineHeight: 1.2 }}>
-                {user?.role === 'admin' ? 'Senior Warden' : `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username}
+                {user?.role === 'admin' ? 'Senior Boarding Master' : `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username}
               </Typography>
               <Typography variant="caption" sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', fontWeight: 800, display: 'block', mt: 0.25, fontSize: '0.675rem' }}>
-                {user?.role === 'admin' ? 'ADMINISTRATOR' : getRoleLabel(user?.role)}
+                {user?.role === 'admin' ? 'SENIOR BOARDING MASTER' : getRoleLabel(user?.role)}
               </Typography>
             </Box>
 
@@ -207,7 +207,7 @@ const Navbar = ({ onSidebarToggle }) => {
           >
             <Box sx={{ px: 2, py: 1.5 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }} noWrap>
-                {user?.role === 'admin' ? 'Senior Warden' : `${user?.first_name || ''} ${user?.last_name || ''}`}
+                {user?.role === 'admin' ? 'Senior Boarding Master' : `${user?.first_name || ''} ${user?.last_name || ''}`}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }} noWrap>
                 {user?.email}

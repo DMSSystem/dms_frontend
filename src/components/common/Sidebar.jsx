@@ -84,7 +84,7 @@ const Sidebar = ({ mobileOpen, onSidebarToggle }) => {
           DMS Admin
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: '0.01em' }}>
-          St. Jude's Academy
+          Uhuru Boys Secondary
         </Typography>
       </Box>
 
